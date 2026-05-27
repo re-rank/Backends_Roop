@@ -3,7 +3,11 @@
     "allow": [
       "Bash(gh auth:*)",
       "Bash(cd /e/Re-Roop/frontend && gh repo create re-rank-offical --public --source=. --remote=origin 2>&1)",
-      "Bash(cd /e/Re-Roop/frontend && git push -u origin master 2>&1)"
+      "Bash(cd /e/Re-Roop/frontend && git push -u origin master 2>&1)",
+      "Bash(cd /e/Re-Roop/frontend && git commit -m \"$\\(cat <<'EOF'\nMerge remote master with allow-unrelated-histories\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\" 2>&1)",
+      "Bash(cd /e/Re-Roop/frontend && git stash pop && git push origin master 2>&1)",
+      "Bash(cd /e/Re-Roop/frontend && git push origin master 2>&1)",
+      "Bash(cd /e/Re-Roop/frontend && git stash drop 2>&1)"
     ]
   }
 }
