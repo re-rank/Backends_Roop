@@ -1,0 +1,36 @@
+# Environment
+.env
+.env.local
+.env.production
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# IDE
+.cursor/rules/codacy.mdc
+.vscode/
+.idea/
+
+# Ruff
+.ruff_cache/
+
+# Certs (local dev only)
+certs/
+
+# Claude work files
+.claude/work/
+
+# OS
+.DS_Store
+Thumbs.db

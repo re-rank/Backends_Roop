@@ -1,0 +1,9 @@
+[project]
+name = "reproof-backend"
+version = "0.1.0"
+description = "Re-Proof 이미지 권리보호 SaaS 백엔드"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
