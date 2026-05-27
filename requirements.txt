@@ -1,0 +1,55 @@
+# API
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+python-multipart>=0.0.9
+
+# DB
+sqlalchemy>=2.0.0
+alembic>=1.13.0
+asyncpg>=0.29.0
+psycopg2-binary>=2.9.0
+
+# 검증 & 설정
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+
+# HTTP
+httpx>=0.27.0
+
+# 이미지
+Pillow>=10.0.0
+opencv-python-headless>=4.9.0
+imagehash>=4.3.0
+
+# AI/ML
+open-clip-torch>=2.24.0
+torch>=2.0.0
+transformers>=4.40.0
+
+# 벡터DB
+qdrant-client>=1.9.0
+
+# C2PA
+c2pa-python>=0.5.0
+
+# 비동기 작업 큐 + 캐시
+qstash>=3.0.0
+upstash-redis>=1.0.0
+
+# 웹 캡처
+playwright>=1.44.0
+
+# PDF
+weasyprint>=62.0
+
+# MongoDB
+motor>=3.4.0
+pymongo>=4.7.0
+
+# 모니터링
+sentry-sdk[fastapi]>=2.0.0
+
+# 유틸
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.0
+python-dotenv>=1.0.0
