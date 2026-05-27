@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(git:*)",
-      "Bash(gh auth:*)"
+      "Bash(gh auth:*)",
+      "Bash(cd /e/Re-Roop/backend && gh repo create re-rank-offical --private --source=. --push --remote=origin 2>&1)",
+      "Bash(cd /e/Re-Roop/backend && gh repo view re-rank/re-rank-offical --json url,defaultBranchRef 2>&1)"
     ]
   }
 }
