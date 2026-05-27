@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh auth:*)",
+      "Bash(cd /e/Re-Roop/frontend && gh repo create re-rank-offical --public --source=. --remote=origin 2>&1)",
+      "Bash(cd /e/Re-Roop/frontend && git push -u origin master 2>&1)"
+    ]
+  }
+}
