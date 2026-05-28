@@ -89,15 +89,18 @@ async def lifespan(app: FastAPI):
             logger.warning("Embedding models failed to load — skipping")
 
     vector_search_svc = None
-    try:
-        vector_search_svc = VectorSearchService(
-            url=settings.QDRANT_URL,
-            api_key=settings.QDRANT_API_KEY,
-        )
-        vector_search_svc.ensure_collections()
-    except Exception:
-        vector_search_svc = None
-        logger.warning("Qdrant unavailable — vector search disabled")
+    if "localhost" not in settings.QDRANT_URL:
+        try:
+            vector_search_svc = VectorSearchService(
+                url=settings.QDRANT_URL,
+                api_key=settings.QDRANT_API_KEY,
+            )
+            vector_search_svc.ensure_collections()
+        except Exception:
+            vector_search_svc = None
+            logger.warning("Qdrant unavailable — vector search disabled")
+    else:
+        logger.info("Qdrant URL is localhost — skipping (not available in production)")
 
     feature_match_svc = FeatureMatchService()
 
@@ -119,15 +122,19 @@ async def lifespan(app: FastAPI):
 
     # MongoDB 파일 스토리지
     file_storage = None
-    try:
-        file_storage = FileStorageService(
-            uri=settings.MONGODB_URI,
-            db_name=settings.MONGODB_DB_NAME,
-        )
-        app.state.file_storage = file_storage
-    except Exception:
+    if "localhost" not in settings.MONGODB_URI:
+        try:
+            file_storage = FileStorageService(
+                uri=settings.MONGODB_URI,
+                db_name=settings.MONGODB_DB_NAME,
+            )
+            app.state.file_storage = file_storage
+        except Exception:
+            app.state.file_storage = None
+            logger.warning("MongoDB unavailable — file storage disabled")
+    else:
         app.state.file_storage = None
-        logger.warning("MongoDB unavailable — file storage disabled")
+        logger.info("MongoDB URI is localhost — skipping (not available in production)")
 
     # QStash + Redis
     app.state.qstash = QStashService(
