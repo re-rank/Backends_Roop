@@ -25,6 +25,7 @@ COPY app/ ./app/
 COPY alembic/ ./alembic/
 COPY alembic.ini .
 COPY certs/ ./certs/
+COPY start.sh .
 
 RUN chown -R appuser:appuser /app
 
