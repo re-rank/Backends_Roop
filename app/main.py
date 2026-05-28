@@ -59,28 +59,45 @@ if settings.SENTRY_DSN:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # ── 시작 시 초기화 ──
-    app.state.stegai = StegAIService(
-        api_key=settings.STEGAI_API_KEY,
-        base_url=settings.STEGAI_BASE_URL,
-    )
-    app.state.c2pa = C2paService(
-        cert_path=settings.C2PA_CERT_PATH,
-        key_path=settings.C2PA_KEY_PATH,
-    )
+    # ── 시작 시 초기화 (각 서비스 실패 시 degraded 모드로 계속) ──
+    try:
+        app.state.stegai = StegAIService(
+            api_key=settings.STEGAI_API_KEY,
+            base_url=settings.STEGAI_BASE_URL,
+        )
+    except Exception:
+        app.state.stegai = None
+        logger.warning("StegAI service unavailable — skipping")
+
+    try:
+        app.state.c2pa = C2paService(
+            cert_path=settings.C2PA_CERT_PATH,
+            key_path=settings.C2PA_KEY_PATH,
+        )
+    except Exception:
+        app.state.c2pa = None
+        logger.warning("C2PA service unavailable — skipping")
 
     # 분석 엔진
     phash_svc = PHashService()
 
     embedding_svc = EmbeddingService()
     if settings.ENABLE_EMBEDDING_MODELS:
-        await asyncio.to_thread(embedding_svc.load_models)
+        try:
+            await asyncio.to_thread(embedding_svc.load_models)
+        except Exception:
+            logger.warning("Embedding models failed to load — skipping")
 
-    vector_search_svc = VectorSearchService(
-        url=settings.QDRANT_URL,
-        api_key=settings.QDRANT_API_KEY,
-    )
-    vector_search_svc.ensure_collections()
+    vector_search_svc = None
+    try:
+        vector_search_svc = VectorSearchService(
+            url=settings.QDRANT_URL,
+            api_key=settings.QDRANT_API_KEY,
+        )
+        vector_search_svc.ensure_collections()
+    except Exception:
+        vector_search_svc = None
+        logger.warning("Qdrant unavailable — vector search disabled")
 
     feature_match_svc = FeatureMatchService()
 
@@ -92,16 +109,25 @@ async def lifespan(app: FastAPI):
     )
 
     # 증거 캡처
-    evidence_svc = EvidenceCaptureService()
-    await evidence_svc.check_browser()
-    app.state.evidence_capture = evidence_svc
+    try:
+        evidence_svc = EvidenceCaptureService()
+        await evidence_svc.check_browser()
+        app.state.evidence_capture = evidence_svc
+    except Exception:
+        app.state.evidence_capture = None
+        logger.warning("Evidence capture service unavailable — skipping")
 
     # MongoDB 파일 스토리지
-    file_storage = FileStorageService(
-        uri=settings.MONGODB_URI,
-        db_name=settings.MONGODB_DB_NAME,
-    )
-    app.state.file_storage = file_storage
+    file_storage = None
+    try:
+        file_storage = FileStorageService(
+            uri=settings.MONGODB_URI,
+            db_name=settings.MONGODB_DB_NAME,
+        )
+        app.state.file_storage = file_storage
+    except Exception:
+        app.state.file_storage = None
+        logger.warning("MongoDB unavailable — file storage disabled")
 
     # QStash + Redis
     app.state.qstash = QStashService(
@@ -116,12 +142,17 @@ async def lifespan(app: FastAPI):
         token=settings.UPSTASH_REDIS_TOKEN,
     )
 
+    logger.info("App startup complete (degraded services logged above)")
+
     yield
 
     # ── 종료 시 정리 ──
-    await app.state.stegai.close()
-    await file_storage.close()
-    vector_search_svc.close()
+    if app.state.stegai:
+        await app.state.stegai.close()
+    if file_storage:
+        await file_storage.close()
+    if vector_search_svc:
+        vector_search_svc.close()
 
 
 app = FastAPI(
@@ -167,27 +198,28 @@ async def health_check():
 
     # MongoDB
     try:
-        storage: FileStorageService = app.state.file_storage
-        checks["mongodb"] = await storage.ping()
+        storage = getattr(app.state, "file_storage", None)
+        checks["mongodb"] = await storage.ping() if storage else False
     except Exception:
         checks["mongodb"] = False
 
     # Qdrant
     try:
-        vector_svc: VectorSearchService = app.state.analysis.vector_search
-        checks["qdrant"] = vector_svc.is_healthy()
+        analysis = getattr(app.state, "analysis", None)
+        vector_svc = getattr(analysis, "vector_search", None) if analysis else None
+        checks["qdrant"] = vector_svc.is_healthy() if vector_svc else False
     except Exception:
         checks["qdrant"] = False
 
     # Upstash Redis
     try:
-        redis_svc: RedisService = app.state.redis
-        checks["redis"] = redis_svc.enabled
+        redis_svc = getattr(app.state, "redis", None)
+        checks["redis"] = redis_svc.enabled if redis_svc else False
     except Exception:
         checks["redis"] = False
 
-    all_healthy = all(checks.values())
-    status = "healthy" if all_healthy else "degraded"
+    # DB만 정상이면 서비스 가능
+    status = "healthy" if checks.get("database") else "degraded"
 
     # 프로덕션에서는 개별 서비스 상태를 노출하지 않음
     if settings.ENVIRONMENT == "production":
