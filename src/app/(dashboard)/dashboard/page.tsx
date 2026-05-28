@@ -6,27 +6,34 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import apiClient from "@/lib/api-client";
+import { useAuthStore } from "@/stores/auth-store";
 import type { DashboardStats, InfringementCase } from "@/types/api";
 
 export default function DashboardPage() {
+  const { organization } = useAuthStore();
+
   const { data: stats, isLoading: statsLoading } = useQuery({
-    queryKey: ["dashboard", "stats"],
+    queryKey: ["dashboard", "stats", organization?.id],
     queryFn: async () => {
-      const { data } = await apiClient.get<{ data: DashboardStats }>(
-        "/api/v1/dashboard/stats",
+      if (!organization) return undefined;
+      const { data } = await apiClient.get<DashboardStats>(
+        `/api/v1/organizations/${organization.id}/dashboard/stats`,
       );
-      return data.data;
+      return data;
     },
+    enabled: !!organization,
   });
 
   const { data: recentCases, isLoading: casesLoading } = useQuery({
-    queryKey: ["dashboard", "recent-cases"],
+    queryKey: ["dashboard", "recent-cases", organization?.id],
     queryFn: async () => {
-      const { data } = await apiClient.get<{ data: InfringementCase[] }>(
-        "/api/v1/dashboard/recent-cases",
+      if (!organization) return [];
+      const { data } = await apiClient.get<InfringementCase[]>(
+        `/api/v1/organizations/${organization.id}/dashboard/recent-cases`,
       );
-      return data.data;
+      return data;
     },
+    enabled: !!organization,
   });
 
   return (

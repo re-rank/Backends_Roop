@@ -15,6 +15,8 @@ export default function DashboardLayout({
   const router = useRouter();
   const { user, fetchMe } = useAuthStore();
 
+  const { fetchOrganizations } = useAuthStore();
+
   useEffect(() => {
     const token =
       typeof window !== "undefined"
@@ -31,10 +33,14 @@ export default function DashboardLayout({
         const currentUser = useAuthStore.getState().user;
         if (!currentUser) {
           router.replace("/login");
+        } else {
+          fetchOrganizations();
         }
       });
+    } else {
+      fetchOrganizations();
     }
-  }, [user, fetchMe, router]);
+  }, [user, fetchMe, fetchOrganizations, router]);
 
   if (!user) {
     return (

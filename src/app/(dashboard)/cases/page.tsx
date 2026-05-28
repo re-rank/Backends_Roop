@@ -14,7 +14,8 @@ import {
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import apiClient from "@/lib/api-client";
-import type { InfringementCase } from "@/types/api";
+import { useAuthStore } from "@/stores/auth-store";
+import type { InfringementCase, PaginatedResponse } from "@/types/api";
 
 const statusMap: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   open: { label: "진행 중", variant: "default" },
@@ -24,14 +25,18 @@ const statusMap: Record<string, { label: string; variant: "default" | "secondary
 };
 
 export default function CasesPage() {
+  const { organization } = useAuthStore();
+
   const { data: cases, isLoading } = useQuery({
-    queryKey: ["cases"],
+    queryKey: ["cases", organization?.id],
     queryFn: async () => {
-      const { data } = await apiClient.get<{ data: InfringementCase[] }>(
-        "/api/v1/cases",
+      if (!organization) return [];
+      const { data } = await apiClient.get<PaginatedResponse<InfringementCase>>(
+        `/api/v1/organizations/${organization.id}/cases`,
       );
-      return data.data;
+      return data.items;
     },
+    enabled: !!organization,
   });
 
   return (

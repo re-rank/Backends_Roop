@@ -17,7 +17,8 @@ import {
 } from "@/components/ui/dialog";
 import apiClient from "@/lib/api-client";
 import { toast } from "sonner";
-import type { Organization } from "@/types/api";
+import { useAuthStore } from "@/stores/auth-store";
+import type { Organization, PaginatedResponse } from "@/types/api";
 
 export default function OrganizationsPage() {
   const queryClient = useQueryClient();
@@ -25,13 +26,15 @@ export default function OrganizationsPage() {
   const [name, setName] = useState("");
   const [brandName, setBrandName] = useState("");
 
+  const { fetchOrganizations } = useAuthStore();
+
   const { data: orgs, isLoading } = useQuery({
     queryKey: ["organizations"],
     queryFn: async () => {
-      const { data } = await apiClient.get<{ data: Organization[] }>(
+      const { data } = await apiClient.get<PaginatedResponse<Organization>>(
         "/api/v1/organizations",
       );
-      return data.data;
+      return data.items;
     },
   });
 
@@ -45,6 +48,7 @@ export default function OrganizationsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["organizations"] });
+      fetchOrganizations();
       toast.success("조직이 생성되었습니다.");
       setOpen(false);
       setName("");

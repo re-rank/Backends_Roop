@@ -10,19 +10,22 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import apiClient from "@/lib/api-client";
 import { toast } from "sonner";
+import { useAuthStore } from "@/stores/auth-store";
 import type { DetectionRequest } from "@/types/api";
 
 export default function DetectionPage() {
   const [url, setUrl] = useState("");
   const [result, setResult] = useState<DetectionRequest | null>(null);
+  const { organization } = useAuthStore();
 
   const analyzeMutation = useMutation({
     mutationFn: async () => {
-      const { data } = await apiClient.post<{ data: DetectionRequest }>(
-        "/api/v1/detection/analyze-url",
-        { url },
+      if (!organization) throw new Error("조직을 먼저 선택해주세요.");
+      const { data } = await apiClient.post<DetectionRequest>(
+        `/api/v1/detection/analyze-url?organization_id=${organization.id}`,
+        { suspect_url: url },
       );
-      return data.data;
+      return data;
     },
     onSuccess: (data) => {
       setResult(data);
@@ -35,6 +38,10 @@ export default function DetectionPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!organization) {
+      toast.error("조직을 먼저 선택해주세요.");
+      return;
+    }
     if (!url.trim()) {
       toast.error("URL을 입력해주세요.");
       return;

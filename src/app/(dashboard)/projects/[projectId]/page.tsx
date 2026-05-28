@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import apiClient from "@/lib/api-client";
-import type { Project, OriginalImage } from "@/types/api";
+import type { PaginatedResponse, Project, OriginalImage } from "@/types/api";
 
 export default function ProjectDetailPage({
   params,
@@ -21,20 +21,20 @@ export default function ProjectDetailPage({
   const { data: project, isLoading: projectLoading } = useQuery({
     queryKey: ["project", projectId],
     queryFn: async () => {
-      const { data } = await apiClient.get<{ data: Project }>(
+      const { data } = await apiClient.get<Project>(
         `/api/v1/projects/${projectId}`,
       );
-      return data.data;
+      return data;
     },
   });
 
   const { data: images, isLoading: imagesLoading } = useQuery({
     queryKey: ["project", projectId, "images"],
     queryFn: async () => {
-      const { data } = await apiClient.get<{ data: OriginalImage[] }>(
-        `/api/v1/images?project_id=${projectId}`,
+      const { data } = await apiClient.get<PaginatedResponse<OriginalImage>>(
+        `/api/v1/projects/${projectId}/images`,
       );
-      return data.data;
+      return data.items;
     },
   });
 

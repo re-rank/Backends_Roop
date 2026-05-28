@@ -26,7 +26,8 @@ import {
 } from "@/components/ui/select";
 import apiClient from "@/lib/api-client";
 import { toast } from "sonner";
-import type { Organization, Project } from "@/types/api";
+import { useAuthStore } from "@/stores/auth-store";
+import type { Organization, PaginatedResponse, Project } from "@/types/api";
 
 export default function ProjectsPage() {
   const queryClient = useQueryClient();
@@ -35,33 +36,28 @@ export default function ProjectsPage() {
   const [description, setDescription] = useState("");
   const [selectedOrg, setSelectedOrg] = useState("");
 
-  const { data: orgs } = useQuery({
-    queryKey: ["organizations"],
-    queryFn: async () => {
-      const { data } = await apiClient.get<{ data: Organization[] }>(
-        "/api/v1/organizations",
-      );
-      return data.data;
-    },
-  });
+  const { organization, organizations: orgs } = useAuthStore();
 
   const { data: projects, isLoading } = useQuery({
-    queryKey: ["projects"],
+    queryKey: ["projects", organization?.id],
     queryFn: async () => {
-      const { data } = await apiClient.get<{ data: Project[] }>(
-        "/api/v1/projects",
+      if (!organization) return [];
+      const { data } = await apiClient.get<PaginatedResponse<Project>>(
+        `/api/v1/organizations/${organization.id}/projects`,
       );
-      return data.data;
+      return data.items;
     },
+    enabled: !!organization,
   });
 
   const createProject = useMutation({
     mutationFn: async () => {
-      const { data } = await apiClient.post("/api/v1/projects", {
-        organization_id: selectedOrg,
-        name,
-        description: description || undefined,
-      });
+      const orgId = selectedOrg || organization?.id;
+      if (!orgId) throw new Error("조직을 선택해주세요.");
+      const { data } = await apiClient.post(
+        `/api/v1/organizations/${orgId}/projects`,
+        { name, description: description || undefined },
+      );
       return data;
     },
     onSuccess: () => {

@@ -18,7 +18,8 @@ import {
 } from "@/components/ui/select";
 import apiClient from "@/lib/api-client";
 import { toast } from "sonner";
-import type { Project } from "@/types/api";
+import { useAuthStore } from "@/stores/auth-store";
+import type { PaginatedResponse, Project } from "@/types/api";
 
 interface FileWithPreview extends File {
   preview?: string;
@@ -32,14 +33,18 @@ export default function UploadPage() {
   );
   const [files, setFiles] = useState<FileWithPreview[]>([]);
 
+  const { organization } = useAuthStore();
+
   const { data: projects } = useQuery({
-    queryKey: ["projects"],
+    queryKey: ["projects", organization?.id],
     queryFn: async () => {
-      const { data } = await apiClient.get<{ data: Project[] }>(
-        "/api/v1/projects",
+      if (!organization) return [];
+      const { data } = await apiClient.get<PaginatedResponse<Project>>(
+        `/api/v1/organizations/${organization.id}/projects`,
       );
-      return data.data;
+      return data.items;
     },
+    enabled: !!organization,
   });
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -70,10 +75,11 @@ export default function UploadPage() {
       for (const file of files) {
         const formData = new FormData();
         formData.append("file", file);
-        formData.append("project_id", selectedProject);
-        const { data } = await apiClient.post("/api/v1/images/upload", formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
+        const { data } = await apiClient.post(
+          `/api/v1/projects/${selectedProject}/images`,
+          formData,
+          { headers: { "Content-Type": "multipart/form-data" } },
+        );
         results.push(data);
       }
       return results;

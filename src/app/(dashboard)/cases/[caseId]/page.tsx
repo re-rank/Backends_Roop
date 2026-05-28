@@ -21,20 +21,20 @@ export default function CaseDetailPage({
   const { data: caseData, isLoading } = useQuery({
     queryKey: ["case", caseId],
     queryFn: async () => {
-      const { data } = await apiClient.get<{ data: InfringementCase }>(
+      const { data } = await apiClient.get<InfringementCase>(
         `/api/v1/cases/${caseId}`,
       );
-      return data.data;
+      return data;
     },
   });
 
   const { data: evidence } = useQuery({
     queryKey: ["case", caseId, "evidence"],
     queryFn: async () => {
-      const { data } = await apiClient.get<{ data: EvidenceFile[] }>(
+      const { data } = await apiClient.get<EvidenceFile[]>(
         `/api/v1/cases/${caseId}/evidence`,
       );
-      return data.data;
+      return data;
     },
   });
 
