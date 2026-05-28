@@ -20,6 +20,8 @@ def run() -> None:
     sync_url = settings.DATABASE_URL.replace(
         "postgresql+asyncpg://", "postgresql://"
     )
+    # psycopg2는 ?ssl=require 미지원 → ?sslmode=require로 변환
+    sync_url = sync_url.replace("?ssl=require", "?sslmode=require")
 
     conn = psycopg2.connect(sync_url)
     conn.autocommit = True
