@@ -24,6 +24,7 @@ RUN playwright install chromium && playwright install-deps chromium
 COPY app/ ./app/
 COPY alembic/ ./alembic/
 COPY alembic.ini .
+COPY certs/ ./certs/
 
 RUN chown -R appuser:appuser /app
 
