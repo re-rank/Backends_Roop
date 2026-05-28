@@ -6,7 +6,13 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { useAuthStore } from "@/stores/auth-store";
 import { toast } from "sonner";
 
@@ -41,12 +47,15 @@ export default function SignupPage() {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-center">회원가입</CardTitle>
+    <Card className="px-2 py-2">
+      <CardHeader className="px-6 pt-6 pb-2">
+        <CardTitle className="text-center text-lg">회원가입</CardTitle>
+        <CardDescription className="text-center">
+          서비스 이용을 위해 정보를 입력해주세요
+        </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-5 px-6 pt-4 pb-2">
           <div className="space-y-2">
             <Label htmlFor="name">이름</Label>
             <Input
@@ -56,6 +65,7 @@ export default function SignupPage() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
+              className="h-10"
             />
           </div>
           <div className="space-y-2">
@@ -67,6 +77,7 @@ export default function SignupPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              className="h-10"
             />
           </div>
           <div className="space-y-2">
@@ -79,6 +90,7 @@ export default function SignupPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={8}
+              className="h-10"
             />
           </div>
           <div className="space-y-2">
@@ -91,20 +103,28 @@ export default function SignupPage() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
               minLength={8}
+              className="h-10"
             />
           </div>
-        </CardContent>
-        <CardFooter className="flex flex-col gap-3">
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          <Button
+            type="submit"
+            className="mt-2 h-10 w-full"
+            disabled={isLoading}
+          >
             {isLoading ? "가입 중..." : "회원가입"}
           </Button>
+        </CardContent>
+        <div className="px-6 pb-6 pt-2 text-center">
           <p className="text-sm text-muted-foreground">
             이미 계정이 있으신가요?{" "}
-            <Link href="/login" className="font-medium text-primary hover:underline">
+            <Link
+              href="/login"
+              className="font-medium text-primary hover:underline"
+            >
               로그인
             </Link>
           </p>
-        </CardFooter>
+        </div>
       </form>
     </Card>
   );
