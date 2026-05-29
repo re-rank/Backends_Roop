@@ -132,7 +132,10 @@ async def read_upload_safely(
     chunks: list[bytes] = []
     total = 0
 
-    async for chunk in file:
+    while True:
+        chunk = await file.read(64 * 1024)  # 64KB chunks
+        if not chunk:
+            break
         total += len(chunk)
         if total > max_size:
             raise BadRequestError(f"File size exceeds {max_size // (1024 * 1024)}MB limit")
