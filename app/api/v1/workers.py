@@ -64,7 +64,9 @@ async def _verify_qstash(request: Request, qstash_svc: QStashService) -> bool:
         return False
 
     body = (await request.body()).decode("utf-8")
-    url = str(request.url)
+    # QStash는 외부 URL로 서명하므로, Railway 프록시 뒤에서는
+    # request.url(내부 URL) 대신 BACKEND_URL + path를 사용해야 함
+    url = f"{settings.BACKEND_URL.rstrip('/')}{request.url.path}"
     return qstash_svc.verify_signature(signature=signature, body=body, url=url)
 
 
