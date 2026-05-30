@@ -8,6 +8,7 @@ from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.core.exceptions import ForbiddenError, NotFoundError
 from app.models.organization import Organization
+from app.models.project import Project
 from app.models.user import User
 from app.schemas.common import PaginatedResponse
 from app.schemas.organization import (
@@ -40,6 +41,16 @@ async def list_organizations(
     current_user: User = Depends(get_current_user),
 ):
     base_query = select(Organization).where(Organization.owner_id == current_user.id)
+
+    # 기존 유저 대응: org가 0개이면 자동 생성
+    count_result = await db.execute(select(func.count()).select_from(base_query.subquery()))
+    if (count_result.scalar() or 0) == 0:
+        org = Organization(owner_id=current_user.id, name=f"{current_user.name}의 조직")
+        db.add(org)
+        await db.flush()
+        project = Project(organization_id=org.id, name="기본 프로젝트")
+        db.add(project)
+        await db.flush()
 
     total_result = await db.execute(select(func.count()).select_from(base_query.subquery()))
     total = total_result.scalar() or 0

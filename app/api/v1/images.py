@@ -183,6 +183,45 @@ async def list_images(
     )
 
 
+@router.get(
+    "/images",
+    response_model=PaginatedResponse[ImageResponse],
+)
+async def list_all_images(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    status: str | None = None,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """사용자의 전체 이미지 목록 (프로젝트 무관)."""
+    base_query = (
+        select(OriginalImage)
+        .join(Project, OriginalImage.project_id == Project.id)
+        .join(Organization, Project.organization_id == Organization.id)
+        .where(Organization.owner_id == current_user.id)
+    )
+    if status:
+        base_query = base_query.where(OriginalImage.status == status)
+
+    total_result = await db.execute(select(func.count()).select_from(base_query.subquery()))
+    total = total_result.scalar() or 0
+
+    result = await db.execute(
+        base_query.order_by(OriginalImage.created_at.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    )
+    images = result.scalars().all()
+
+    return PaginatedResponse.create(
+        items=[ImageResponse.model_validate(img) for img in images],
+        total=total,
+        page=page,
+        page_size=page_size,
+    )
+
+
 @router.get("/images/{image_id}", response_model=ImageResponse)
 async def get_image(
     image_id: uuid.UUID,
